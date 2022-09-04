@@ -8,36 +8,79 @@
 const int sensorJabon = 4;
 const int ledOffJabon = 5;    //color rojo led apagado jabon
 const int ledOnJabon = 6;   //color verde led encendido jabon
-const int dispensador = 7; 
+const int dispensador = 7;  //salida para activar el rele del dispensador
 
-bool estadoSensorJ = false;    //guarda el estado del sensor jabon
+bool estadoSensorJ = false;    //guarda el estado del sensor jabon(True si el sensor es NPN(logica negativa))
 
 const int sensorAgua = 8;
 const int ledOffAgua = 9;    //color rojo led apagado jabon
 const int ledOnAgua = 10;   //color verde led encendido jabon
-const int bomba = 11; 
+const int bombaAgua = 11;     //salida para activar el rele de la (Bomba, electrovalvula)
 
-const int botonJabonn = 2;
-bool estadoBoton = false;
+bool estadoSensorAgua = true;  //guarda el estado del sensor agua(True si el sensor es NPN(logica negativa))
 
-const int botonTiempito = 13; //boton para determinar tiempo del dispensador
+const int botonJabonn = 2;    //modo continuo jabon para dispensar nueva botella
+bool estadoBoton = false;  //Creo que no se esta usando esta varialble   
+
+const int botonTiempito = 3; //boton para determinar tiempo del dispensador
 bool estadoBotonTiempito = false;
 bool UltestadoBotonTiempito = true; //ultimo estado del boton tiempito
-const int buzzer =12;
+const int buzzer = 12;
 
-int contador = 0;   //
-
+int contador = 0;   //variable se usa en el tiempo de dispensado de jabon
 int tiempito = 0;
+//variables para guardar el tiempo de dispensado de jabon
 int tiempito1 = 2000;
 int tiempito2 = 5000;
 int tiempito3 = 10000;
+
+pt ptActivarAgua;
+int activarAguaThread(struct pt* pt)
+{
+    PT_BEGIN(pt);
+
+    for(;;)
+    {
+        if(estadoSensorAgua == false)
+        {
+            digitalWrite(ledOffAgua, HIGH);
+            digitalWrite(ledOnAgua, LOW);
+            digitalWrite(bombaAgua, HIGH);
+            PT_SLEEP(pt, 1000);
+        }
+
+        else
+        {
+            digitalWrite(ledOffAgua, LOW);
+            digitalWrite(ledOnAgua, HIGH);
+            digitalWrite(bombaAgua, LOW);
+            PT_YIELD(pt);
+        }
+    }
+    PT_END(pt);
+}
+
+pt ptSensorAgua;
+int sensorAguaThread(struct pt* pt) 
+{
+  PT_BEGIN(pt);
+
+  for(;;) 
+  {	
+  	estadoSensorAgua = digitalRead(sensorAgua);
+	PT_YIELD(pt);
+  }
+
+  PT_END(pt);
+}
+
+
 
 pt ptBlink;     //ptblick es para controlar el teimpo del dispensdor de jabon
 int blinkThread(struct pt* pt) 
 {
   PT_BEGIN(pt);
 
-  // Loop forever
   for(;;) 
   {
 	  if (estadoSensorJ == true) 
@@ -84,6 +127,9 @@ void setup()
 {
   Serial.begin(9600);
   tiempito = tiempito1; //inicia por default en modo dispensador(poco jabon para dispensar)
+  PT_INIT(&ptActivarAgua);
+  PT_INIT(&ptSensorAgua);
+
   PT_INIT(&ptBlink);    // INICIALIZAR protothreads
   PT_INIT(&ptButton);
 
@@ -94,7 +140,7 @@ void setup()
   pinMode(ledOnJabon, OUTPUT);
 
   pinMode(sensorAgua, INPUT);
-  pinMode(bomba, OUTPUT);
+  pinMode(bombaAgua, OUTPUT);
   pinMode(ledOffAgua, OUTPUT);
   pinMode(ledOnAgua, OUTPUT);
 
@@ -104,29 +150,27 @@ void setup()
   digitalWrite(ledOnJabon, HIGH);
   digitalWrite(ledOffJabon, LOW);
 
-  digitalWrite(ledOnAgua, LOW);
-  digitalWrite(ledOffAgua, HIGH);
-
-
-
-
-
+  digitalWrite(ledOnAgua, HIGH);
+  digitalWrite(ledOffAgua, LOW);
   
 }
 
 void loop()
 {
-  
+  PT_SCHEDULE(activarAguaThread(&ptActivarAgua));
+  PT_SCHEDULE(sensorAguaThread(&ptSensorAgua));
+
   PT_SCHEDULE(blinkThread(&ptBlink));   //llamar a funciones de contro y encendido de dispensador
   PT_SCHEDULE(buttonThread(&ptButton));
-  activarAgua();
+
+  //activarAgua();
 
   while (digitalRead(botonJabonn) == true)  //modo continuo de jabon
   {
     jabonContinuo();
   }
 
-  estadoBotonTiempito = digitalRead(botonTiempito);
+  estadoBotonTiempito = digitalRead(botonTiempito); //Lee pul
   if (estadoBotonTiempito != UltestadoBotonTiempito)
   {
     if (estadoBotonTiempito == true)
@@ -151,7 +195,7 @@ void loop()
         modo3();
       }
 }
-
+/*
 void activarAgua()
 {
     bool estadoSensorA = false;
@@ -160,18 +204,20 @@ void activarAgua()
     {
       digitalWrite(ledOffAgua, LOW);
       digitalWrite(ledOnAgua, HIGH);
-      digitalWrite(bomba, HIGH);
+      digitalWrite(bomba, LOW);   //logica invertida por sensor NPN(activacion con nivel logico bajo)
+      
     }
 
     else 
     {
-      digitalWrite(bomba, LOW);
+      digitalWrite(bomba, HIGH);
       digitalWrite(ledOnAgua, LOW);
       digitalWrite(ledOffAgua, HIGH);
 
     }
+    delay(500);     //delay para estabilidad contra falsa deteccion
 }
-
+*/
 void jabonContinuo()
 {
   digitalWrite(ledOffJabon, HIGH);
