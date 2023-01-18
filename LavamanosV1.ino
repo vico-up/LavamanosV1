@@ -2,6 +2,13 @@
 //Codigo lavamanos automatico v1, usando protothreads 
 */
 
+/*
+Tareas
+ajustar tiempo para dispensar el jabon definitivamente
+Cambiar funcion buzzer(que suene el buzzer antes de los leds)
+*/
+
+
 
 #include <protothreads.h>
 
@@ -10,7 +17,7 @@ const int ledOffJabon = 5;    //color rojo led apagado jabon
 const int ledOnJabon = 6;   //color verde led encendido jabon
 const int dispensador = 7;  //salida para activar el rele del dispensador
 
-bool estadoSensorJ = false;    //guarda el estado del sensor jabon(True si el sensor es NPN(logica negativa))
+bool estadoSensorJ = true;    //guarda el estado del sensor jabon(True si el sensor es NPN(logica negativa))
 
 const int sensorAgua = 8;
 const int ledOffAgua = 9;    //color rojo led apagado jabon
@@ -41,18 +48,18 @@ int activarAguaThread(struct pt* pt)
 
     for(;;)
     {
-        if(estadoSensorAgua == false)
+        if(estadoSensorAgua == false) //compara con logica negativa por el sensor es NPN(se activa con logica negativa)
         {
-            digitalWrite(ledOffAgua, HIGH);
-            digitalWrite(ledOnAgua, LOW);
+            digitalWrite(ledOffAgua, LOW);
+            digitalWrite(ledOnAgua, HIGH);
             digitalWrite(bombaAgua, HIGH);
-            PT_SLEEP(pt, 1000);
+            PT_SLEEP(pt, 2000);   //tiempo de espera para evitar falso del sensor de agua y no apague y prenda
         }
 
         else
         {
-            digitalWrite(ledOffAgua, LOW);
-            digitalWrite(ledOnAgua, HIGH);
+            digitalWrite(ledOffAgua, HIGH);
+            digitalWrite(ledOnAgua, LOW);
             digitalWrite(bombaAgua, LOW);
             PT_YIELD(pt);
         }
@@ -68,7 +75,7 @@ int sensorAguaThread(struct pt* pt)
   for(;;) 
   {	
   	estadoSensorAgua = digitalRead(sensorAgua);
-	PT_YIELD(pt);
+	  PT_YIELD(pt);
   }
 
   PT_END(pt);
@@ -83,14 +90,14 @@ int blinkThread(struct pt* pt)
 
   for(;;) 
   {
-	  if (estadoSensorJ == true) 
+	  if (estadoSensorJ == false) 
     {
-		digitalWrite(ledOffJabon, HIGH);
-    digitalWrite(ledOnJabon, LOW);
+		digitalWrite(ledOffJabon, LOW);
+    digitalWrite(ledOnJabon, HIGH);
     digitalWrite(dispensador, HIGH);   // Encender dispensador (HIGH is the voltage level)
     PT_SLEEP(pt, tiempito);                 //tiempo de activacion
-    digitalWrite(ledOnJabon, HIGH);
-    digitalWrite(ledOffJabon, LOW);
+    digitalWrite(ledOnJabon, LOW);
+    digitalWrite(ledOffJabon, HIGH);
 		digitalWrite(dispensador, LOW);    // apgar dispensador by making the voltage LOW
 		PT_SLEEP(pt, 5000);               //tiempo para evitar desperdicio de jabon
 	  } 
@@ -98,8 +105,8 @@ int blinkThread(struct pt* pt)
     else 
     {
 		digitalWrite(dispensador, LOW);    // mantener apagado sipensador si no hay activacion
-    digitalWrite(ledOffJabon, LOW);    //mantiene encendido led rojo de jabon
-    digitalWrite(ledOnJabon, HIGH);
+    digitalWrite(ledOffJabon, HIGH);    //mantiene encendido led rojo de jabon
+    digitalWrite(ledOnJabon, LOW);
 		PT_YIELD(pt);
 	  }
   }
@@ -147,11 +154,11 @@ void setup()
   pinMode(botonTiempito, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
 
-  digitalWrite(ledOnJabon, HIGH);
-  digitalWrite(ledOffJabon, LOW);
+  digitalWrite(ledOnJabon, LOW);
+  digitalWrite(ledOffJabon, HIGH);
 
-  digitalWrite(ledOnAgua, HIGH);
-  digitalWrite(ledOffAgua, LOW);
+  digitalWrite(ledOnAgua, LOW);
+  digitalWrite(ledOffAgua, HIGH);
   
 }
 
@@ -163,6 +170,7 @@ void loop()
   PT_SCHEDULE(blinkThread(&ptBlink));   //llamar a funciones de contro y encendido de dispensador
   PT_SCHEDULE(buttonThread(&ptButton));
 
+  //llma a la funcion activar agua sin prototreads borrardespues de realizar pruebas
   //activarAgua();
 
   while (digitalRead(botonJabonn) == true)  //modo continuo de jabon
@@ -195,7 +203,7 @@ void loop()
         modo3();
       }
 }
-/*
+/*Borrar despues de realizar pruebas
 void activarAgua()
 {
     bool estadoSensorA = false;
@@ -220,34 +228,36 @@ void activarAgua()
 */
 void jabonContinuo()
 {
-  digitalWrite(ledOffJabon, HIGH);
-  digitalWrite(ledOnJabon, LOW);
+  digitalWrite(ledOffJabon, LOW);
+  digitalWrite(ledOnJabon, HIGH);
   digitalWrite(dispensador, HIGH);
 }
 
 void jabonContinuoOff()
 {
-  digitalWrite(dispensador, LOW);    // mantener apagado sipensador si no hay activacion
-  digitalWrite(ledOnJabon, HIGH);
+  digitalWrite(dispensador, HIGH);    // mantener apagado sipensador si no hay activacion
+  digitalWrite(ledOnJabon, LOW);
   digitalWrite(ledOffJabon, LOW);
 }
 
 void modo2()
 {
     tiempito = tiempito2;
-    digitalWrite(ledOffJabon, HIGH);
-    digitalWrite(ledOnJabon, LOW);
-    delay(500);
-    digitalWrite(ledOnJabon, HIGH);
-    delay(250);
-    digitalWrite(ledOnJabon, LOW);
-    delay(500);
-    digitalWrite(ledOnJabon, HIGH);
 
     digitalWrite(buzzer, HIGH);
     delay(500);
     digitalWrite(buzzer, LOW);
 
+    digitalWrite(ledOffJabon, LOW);
+    digitalWrite(ledOnJabon, HIGH);
+    delay(500);
+    digitalWrite(ledOnJabon, LOW);
+    delay(250);
+    digitalWrite(ledOnJabon, HIGH);
+    delay(500);
+    digitalWrite(ledOnJabon, LOW);
+
+    
     contador = contador + 1 ;
   
 }
@@ -256,22 +266,25 @@ void modo3()
 {
   
     tiempito = tiempito3;
-    digitalWrite(ledOffJabon, HIGH);
-    digitalWrite(ledOnJabon, LOW);
-    delay(500);
-    digitalWrite(ledOnJabon, HIGH);
-    delay(250);
-    digitalWrite(ledOnJabon, LOW);
-    delay(500);
-    digitalWrite(ledOnJabon, HIGH);
-    delay(250);
-    digitalWrite(ledOnJabon, LOW);
-    delay(500);
-    digitalWrite(ledOnJabon, HIGH);
 
     digitalWrite(buzzer, HIGH);
     delay(500);
     digitalWrite(buzzer, LOW);
+
+    digitalWrite(ledOffJabon, LOW);
+    digitalWrite(ledOnJabon, HIGH);
+    delay(500);
+    digitalWrite(ledOnJabon, LOW);
+    delay(250);
+    digitalWrite(ledOnJabon, HIGH);
+    delay(500);
+    digitalWrite(ledOnJabon, LOW);
+    delay(250);
+    digitalWrite(ledOnJabon, HIGH);
+    delay(500);
+    digitalWrite(ledOnJabon, LOW);
+
+   
 
     contador = 0;
   
@@ -281,14 +294,15 @@ void modo1()
 {
   
     tiempito = tiempito1;
-    digitalWrite(ledOffJabon, HIGH);
-    digitalWrite(ledOnJabon, LOW);
-    delay(500);
-    digitalWrite(ledOnJabon, HIGH);
-    
+
     digitalWrite(buzzer, HIGH);
     delay(500);
     digitalWrite(buzzer, LOW);
 
+    digitalWrite(ledOffJabon, LOW);
+    digitalWrite(ledOnJabon, HIGH);
+    delay(500);
+    digitalWrite(ledOnJabon, LOW);
+    
     contador = contador + 1;
 }
