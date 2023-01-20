@@ -5,7 +5,7 @@
 /*
 Tareas
 ajustar tiempo para dispensar el jabon definitivamente
-Cambiar funcion buzzer(que suene el buzzer antes de los leds)
+guardar en memoria eeprom ultimo estado de tiempo de dispensador tmb el contador
 */
 
 
@@ -178,7 +178,7 @@ void loop()
     jabonContinuo();
   }
 
-  estadoBotonTiempito = digitalRead(botonTiempito); //Lee pul
+  estadoBotonTiempito = digitalRead(botonTiempito); //Lee pulsador de cantidad de dispensado de jabon
   if (estadoBotonTiempito != UltestadoBotonTiempito)
   {
     if (estadoBotonTiempito == true)
