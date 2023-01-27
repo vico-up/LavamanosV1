@@ -5,12 +5,13 @@
 /*
 Tareas
 ajustar tiempo para dispensar el jabon definitivamente
-guardar en memoria eeprom ultimo estado de tiempo de dispensador tmb el contador
+
 */
 
 
 
 #include <protothreads.h>
+#include <EEPROM.h>
 
 const int sensorJabon = 4;
 const int ledOffJabon = 5;    //color rojo led apagado jabon
@@ -35,11 +36,14 @@ bool UltestadoBotonTiempito = true; //ultimo estado del boton tiempito
 const int buzzer = 12;
 
 int contador = 0;   //variable se usa en el tiempo de dispensado de jabon
+int ultimoContador;
+
 int tiempito = 0;
 //variables para guardar el tiempo de dispensado de jabon
-int tiempito1 = 2000;
-int tiempito2 = 5000;
-int tiempito3 = 10000;
+int tiempito1 = 1000;
+int tiempito2 = 1400;
+int tiempito3 = 2000;
+int ultimoTiempito;
 
 pt ptActivarAgua;
 int activarAguaThread(struct pt* pt)
@@ -133,7 +137,9 @@ int buttonThread(struct pt* pt)
 void setup()
 {
   Serial.begin(9600);
-  tiempito = tiempito1; //inicia por default en modo dispensador(poco jabon para dispensar)
+  tiempito = EEPROM.get(10, ultimoTiempito); //retorna el ultimo dato de contadr y tiempito
+  contador = EEPROM.get(0, ultimoContador);
+  
   PT_INIT(&ptActivarAgua);
   PT_INIT(&ptSensorAgua);
 
@@ -151,7 +157,7 @@ void setup()
   pinMode(ledOffAgua, OUTPUT);
   pinMode(ledOnAgua, OUTPUT);
 
-  pinMode(botonTiempito, INPUT_PULLUP);
+  pinMode(botonTiempito, INPUT);
   pinMode(buzzer, OUTPUT);
 
   digitalWrite(ledOnJabon, LOW);
@@ -159,7 +165,13 @@ void setup()
 
   digitalWrite(ledOnAgua, LOW);
   digitalWrite(ledOffAgua, HIGH);
-  
+  /*
+  Serial.println("Ultimo tiempo es: "); 
+  Serial.println(EEPROM.get(10, ultimoTiempito));
+  delay(100);  
+  Serial.println("Ultimo contador es: ");
+  Serial.println(EEPROM.get(0, ultimoContador));
+  */
 }
 
 void loop()
@@ -183,8 +195,10 @@ void loop()
   {
     if (estadoBotonTiempito == true)
     {
+      llamarBuzzer();
       contador++;
       delay(600);
+      Serial.print("El contador es: ");
       Serial.println(contador);
     }
   }
@@ -240,13 +254,18 @@ void jabonContinuoOff()
   digitalWrite(ledOffJabon, LOW);
 }
 
+void llamarBuzzer()
+{
+  digitalWrite(buzzer, HIGH);
+  delay(500);
+  digitalWrite(buzzer, LOW);
+}
+
 void modo2()
 {
     tiempito = tiempito2;
-
-    digitalWrite(buzzer, HIGH);
-    delay(500);
-    digitalWrite(buzzer, LOW);
+    ultimoTiempito = tiempito;
+    EEPROM.put(10, ultimoTiempito);
 
     digitalWrite(ledOffJabon, LOW);
     digitalWrite(ledOnJabon, HIGH);
@@ -258,18 +277,24 @@ void modo2()
     digitalWrite(ledOnJabon, LOW);
 
     
-    contador = contador + 1 ;
-  
+    contador = contador + 1;
+    ultimoContador = contador;
+    EEPROM.put(0, ultimoContador);
+    /*
+    Serial.println("Ultimo tiempo es: "); 
+    Serial.println(EEPROM.get(10, ultimoTiempito));
+    
+    Serial.println("Ultimo contador es: ");
+    Serial.println(EEPROM.get(0, ultimoContador));
+    */
 }
 
 void modo3()
 {
   
     tiempito = tiempito3;
-
-    digitalWrite(buzzer, HIGH);
-    delay(500);
-    digitalWrite(buzzer, LOW);
+    ultimoTiempito = tiempito;
+    EEPROM.put(10, ultimoTiempito);
 
     digitalWrite(ledOffJabon, LOW);
     digitalWrite(ledOnJabon, HIGH);
@@ -284,20 +309,24 @@ void modo3()
     delay(500);
     digitalWrite(ledOnJabon, LOW);
 
-   
-
     contador = 0;
-  
+    ultimoContador = contador;
+    EEPROM.put(0, ultimoContador);
+    /*
+    Serial.println("Ultimo tiempo es: "); 
+    Serial.println(EEPROM.get(10, ultimoTiempito));
+    
+    Serial.println("Ultimo contador es: ");
+    Serial.println(EEPROM.get(0, ultimoContador));
+    */
 }
 
 void modo1()
 {
   
     tiempito = tiempito1;
-
-    digitalWrite(buzzer, HIGH);
-    delay(500);
-    digitalWrite(buzzer, LOW);
+    ultimoTiempito = tiempito;
+    EEPROM.put(10, ultimoTiempito);
 
     digitalWrite(ledOffJabon, LOW);
     digitalWrite(ledOnJabon, HIGH);
@@ -305,4 +334,13 @@ void modo1()
     digitalWrite(ledOnJabon, LOW);
     
     contador = contador + 1;
+    ultimoContador = contador;
+    EEPROM.put(0, ultimoContador);
+    /*
+    Serial.println("Ultimo tiempo es: "); 
+    Serial.println(EEPROM.get(10, ultimoTiempito));
+    
+    Serial.println("Ultimo contador es: ");
+    Serial.println(EEPROM.get(0, ultimoContador));
+    */
 }
