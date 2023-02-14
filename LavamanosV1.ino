@@ -40,9 +40,9 @@ int ultimoContador;
 
 int tiempito = 0;
 //variables para guardar el tiempo de dispensado de jabon
-int tiempito1 = 1000;
-int tiempito2 = 1400;
-int tiempito3 = 2000;
+int tiempito1 = 1100;
+int tiempito2 = 2100; //pareca que este va a ser maximo
+//int tiempito3 = 3200;
 int ultimoTiempito;
 
 pt ptActivarAgua;
@@ -57,7 +57,7 @@ int activarAguaThread(struct pt* pt)
             digitalWrite(ledOffAgua, LOW);
             digitalWrite(ledOnAgua, HIGH);
             digitalWrite(bombaAgua, HIGH);
-            PT_SLEEP(pt, 2000);   //tiempo de espera para evitar falso del sensor de agua y no apague y prenda
+            PT_SLEEP(pt, 5000);   //tiempo de espera para evitar falso del sensor de agua y no apague y prenda
         }
 
         else
@@ -165,13 +165,13 @@ void setup()
 
   digitalWrite(ledOnAgua, LOW);
   digitalWrite(ledOffAgua, HIGH);
-  /*
-  Serial.println("Ultimo tiempo es: "); 
+  
+  /*Serial.println("Ultimo tiempo es: "); 
   Serial.println(EEPROM.get(10, ultimoTiempito));
-  delay(100);  
+  delay(2000);  
   Serial.println("Ultimo contador es: ");
-  Serial.println(EEPROM.get(0, ultimoContador));
-  */
+  Serial.println(EEPROM.get(0, ultimoContador));*/
+  
 }
 
 void loop()
@@ -212,10 +212,11 @@ void loop()
       {
         modo2();
       }
+      /*
       else if (contador == 5)
       {
         modo3();
-      }
+      }*/
 }
 /*Borrar despues de realizar pruebas
 void activarAgua()
@@ -277,7 +278,7 @@ void modo2()
     digitalWrite(ledOnJabon, LOW);
 
     
-    contador = contador + 1;
+    contador = 0;
     ultimoContador = contador;
     EEPROM.put(0, ultimoContador);
     /*
@@ -288,7 +289,7 @@ void modo2()
     Serial.println(EEPROM.get(0, ultimoContador));
     */
 }
-
+/*
 void modo3()
 {
   
@@ -312,14 +313,15 @@ void modo3()
     contador = 0;
     ultimoContador = contador;
     EEPROM.put(0, ultimoContador);
-    /*
+    
     Serial.println("Ultimo tiempo es: "); 
     Serial.println(EEPROM.get(10, ultimoTiempito));
     
     Serial.println("Ultimo contador es: ");
     Serial.println(EEPROM.get(0, ultimoContador));
-    */
+    
 }
+*/
 
 void modo1()
 {
